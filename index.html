@@ -6,274 +6,7 @@
     <title>Mines - игра на баланс</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: var(--tg-theme-bg-color, #f5f5f5);
-            color: var(--tg-theme-text-color, #000000);
-            padding: 16px;
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 400px;
-            margin: 0 auto;
-        }
-        
-        /* Шапка с балансом */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 16px;
-            background: var(--tg-theme-secondary-bg-color, #ffffff);
-            border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .balance-label {
-            font-size: 14px;
-            color: var(--tg-theme-hint-color, #666);
-        }
-        
-        .balance-amount {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--tg-theme-text-color, #000);
-        }
-        
-        /* Панель ставки */
-        .bet-panel {
-            background: var(--tg-theme-secondary-bg-color, #ffffff);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 20px;
-        }
-        
-        .bet-label {
-            font-size: 14px;
-            color: var(--tg-theme-hint-color, #666);
-            margin-bottom: 8px;
-        }
-        
-        .bet-input {
-            width: 100%;
-            padding: 12px;
-            font-size: 18px;
-            border: 2px solid var(--tg-theme-hint-color, #ddd);
-            border-radius: 12px;
-            background: var(--tg-theme-bg-color, #fff);
-            color: var(--tg-theme-text-color, #000);
-            margin-bottom: 12px;
-        }
-        
-        .bet-input:focus {
-            outline: none;
-            border-color: var(--tg-theme-button-color, #3390ec);
-        }
-        
-        .bet-quick {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-        
-        .quick-btn {
-            padding: 8px;
-            border: none;
-            border-radius: 8px;
-            background: var(--tg-theme-bg-color, #f0f0f0);
-            color: var(--tg-theme-text-color, #000);
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        
-        .quick-btn:active {
-            opacity: 0.7;
-        }
-        
-        .start-btn {
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 12px;
-            background: var(--tg-theme-button-color, #3390ec);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        
-        .start-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        /* Игровое поле */
-        .game-panel {
-            background: var(--tg-theme-secondary-bg-color, #ffffff);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        
-        .game-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--tg-theme-hint-color, #ddd);
-        }
-        
-        .multiplier {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--tg-theme-button-color, #3390ec);
-        }
-        
-        .possible-win {
-            font-size: 16px;
-            color: var(--tg-theme-hint-color, #666);
-        }
-        
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-        
-        .cell {
-            aspect-ratio: 1;
-            border: none;
-            border-radius: 12px;
-            background: var(--tg-theme-bg-color, #f0f0f0);
-            color: var(--tg-theme-text-color, #000);
-            font-size: 24px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .cell:active {
-            transform: scale(0.95);
-        }
-        
-        .cell.mine {
-            background: #ff4444;
-            color: white;
-        }
-        
-        .cell.gem {
-            background: #4CAF50;
-            color: white;
-        }
-        
-        .cell:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-        
-        .game-actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-        
-        .cashout-btn {
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            background: #4CAF50;
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        
-        .restart-btn {
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            background: var(--tg-theme-button-color, #3390ec);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        
-        /* Сообщения */
-        .message {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            padding: 16px;
-            border-radius: 12px;
-            text-align: center;
-            color: white;
-            display: none;
-            animation: slideUp 0.3s;
-            z-index: 1000;
-        }
-        
-        .message.success {
-            background: #4CAF50;
-        }
-        
-        .message.error {
-            background: #ff4444;
-        }
-        
-        .message.info {
-            background: var(--tg-theme-button-color, #3390ec);
-        }
-        
-        @keyframes slideUp {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        /* Лоадер */
-        .loader {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
-        
-        .loader.active {
-            display: flex;
-        }
-        
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid var(--tg-theme-secondary-bg-color, #fff);
-            border-top-color: var(--tg-theme-button-color, #3390ec);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        /* Твои стили */
     </style>
 </head>
 <body>
@@ -367,34 +100,20 @@
         userId = tg.initDataUnsafe?.user?.id;
         if (!userId) {
             showMessage('Ошибка авторизации', 'error');
-        } else {
-            loadBalance();
         }
         
-// Загрузка баланса
-async function loadBalance() {
-    showLoader(true);
-    console.log('📤 Загружаем баланс для userId:', userId);
-    
-    try {
-        // Отправляем запрос в бота
-        const requestData = {
-            action: 'get_balance',
-            user_id: userId
-        };
-        console.log('📤 Отправляем данные:', requestData);
-        tg.sendData(JSON.stringify(requestData));
+        // Функция для обновления баланса (вызывается из Python)
+        window.updateBalance = function(balance) {
+            userBalance = balance;
+            document.getElementById('balance').textContent = formatMoney(balance);
+            showLoader(false);
+            showMessage('✅ Баланс загружен', 'success');
+        }
         
-        // НЕ скрываем лоадер здесь! Он скроется только после получения ответа от бота
+        // Показываем лоадер
+        showLoader(true);
         
-    } catch (error) {
-        console.error('❌ Ошибка загрузки баланса:', error);
-        showMessage('Ошибка загрузки баланса', 'error');
-        showLoader(false);
-    }
-}
-        
-        // Установка ставки
+        // Функции игры
         function setBet(amount) {
             document.getElementById('betAmount').value = amount;
         }
@@ -408,7 +127,6 @@ async function loadBalance() {
             document.getElementById('betAmount').value = userBalance;
         }
         
-        // Начало игры
         function startGame() {
             const betAmount = parseInt(document.getElementById('betAmount').value);
             
@@ -424,7 +142,6 @@ async function loadBalance() {
             
             showLoader(true);
             
-            // Отправляем запрос на начало игры
             tg.sendData(JSON.stringify({
                 action: 'start_game',
                 user_id: userId,
@@ -434,7 +151,6 @@ async function loadBalance() {
             currentBet = betAmount;
         }
         
-        // Открытие клетки
         function openCell(index) {
             if (!gameActive || gameOver || opened.includes(index)) return;
             
@@ -448,7 +164,6 @@ async function loadBalance() {
             }));
         }
         
-        // Забрать выигрыш
         function cashOut() {
             if (!gameActive || gameOver) return;
             
@@ -461,7 +176,6 @@ async function loadBalance() {
             }));
         }
         
-        // Сброс игры
         function resetGame() {
             gameActive = false;
             gameOver = false;
@@ -475,7 +189,6 @@ async function loadBalance() {
             document.getElementById('cashoutBtn').disabled = true;
         }
         
-        // Обновление интерфейса
         function updateGameUI(data) {
             gameId = data.game_id;
             gameActive = data.game_active;
@@ -484,26 +197,21 @@ async function loadBalance() {
             opened = data.opened || [];
             currentMultiplier = data.multiplier || 1.0;
             
-            // Обновляем баланс
             if (data.new_balance !== undefined) {
                 userBalance = data.new_balance;
                 document.getElementById('balance').textContent = formatMoney(userBalance);
             }
             
-            // Обновляем множитель и возможный выигрыш
             document.getElementById('multiplier').textContent = `x${currentMultiplier.toFixed(2)}`;
             const possibleWin = Math.floor(currentBet * currentMultiplier);
             document.getElementById('possibleWin').textContent = formatMoney(possibleWin);
             document.getElementById('currentWin').textContent = formatMoney(possibleWin);
             
-            // Обновляем количество мин
             const minesLeft = TOTAL_MINERALS - opened.filter(i => mines.includes(i)).length;
             document.getElementById('minesLeft').textContent = minesLeft;
             
-            // Рисуем сетку
             drawGrid();
             
-            // Показываем игровое поле
             document.getElementById('betPanel').style.display = 'none';
             document.getElementById('gamePanel').style.display = 'block';
             document.getElementById('cashoutBtn').disabled = !gameActive || gameOver;
@@ -511,7 +219,6 @@ async function loadBalance() {
             showLoader(false);
         }
         
-        // Рисование сетки
         function drawGrid() {
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
@@ -546,12 +253,10 @@ async function loadBalance() {
             }
         }
         
-        // Форматирование денег
         function formatMoney(amount) {
             return amount.toLocaleString() + ' ₽';
         }
         
-        // Показ сообщения
         function showMessage(text, type = 'info') {
             const message = document.getElementById('message');
             message.textContent = text;
@@ -563,7 +268,6 @@ async function loadBalance() {
             }, 3000);
         }
         
-        // Показ/скрытие лоадера
         function showLoader(show) {
             const loader = document.getElementById('loader');
             if (show) {
