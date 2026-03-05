@@ -371,27 +371,28 @@
             loadBalance();
         }
         
-        // Загрузка баланса
-        async function loadBalance() {
-            showLoader(true);
-            try {
-                // Отправляем запрос в бота
-                tg.sendData(JSON.stringify({
-                    action: 'get_balance',
-                    user_id: userId
-                }));
-                
-                // Баланс придет через handleWebAppData в боте
-                // Пока показываем заглушку
-                setTimeout(() => {
-                    showLoader(false);
-                }, 1000);
-                
-            } catch (error) {
-                showMessage('Ошибка загрузки баланса', 'error');
-                showLoader(false);
-            }
-        }
+// Загрузка баланса
+async function loadBalance() {
+    showLoader(true);
+    console.log('📤 Загружаем баланс для userId:', userId);
+    
+    try {
+        // Отправляем запрос в бота
+        const requestData = {
+            action: 'get_balance',
+            user_id: userId
+        };
+        console.log('📤 Отправляем данные:', requestData);
+        tg.sendData(JSON.stringify(requestData));
+        
+        // НЕ скрываем лоадер здесь! Он скроется только после получения ответа от бота
+        
+    } catch (error) {
+        console.error('❌ Ошибка загрузки баланса:', error);
+        showMessage('Ошибка загрузки баланса', 'error');
+        showLoader(false);
+    }
+}
         
         // Установка ставки
         function setBet(amount) {
