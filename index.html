@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mines - игра на баланс</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--tg-theme-bg-color, #f5f5f5);
+            color: var(--tg-theme-text-color, #000000);
+            padding: 16px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        /* Шапка с балансом */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: var(--tg-theme-secondary-bg-color, #ffffff);
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .balance-label {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #666);
+        }
+        
+        .balance-amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--tg-theme-text-color, #000);
+        }
+        
+        /* Панель ставки */
+        .bet-panel {
+            background: var(--tg-theme-secondary-bg-color, #ffffff);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .bet-label {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #666);
+            margin-bottom: 8px;
+        }
+        
+        .bet-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+            border: 2px solid var(--tg-theme-hint-color, #ddd);
+            border-radius: 12px;
+            background: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+            margin-bottom: 12px;
+        }
+        
+        .bet-input:focus {
+            outline: none;
+            border-color: var(--tg-theme-button-color, #3390ec);
+        }
+        
+        .bet-quick {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .quick-btn {
+            padding: 8px;
+            border: none;
+            border-radius: 8px;
+            background: var(--tg-theme-bg-color, #f0f0f0);
+            color: var(--tg-theme-text-color, #000);
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .quick-btn:active {
+            opacity: 0.7;
+        }
+        
+        .start-btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            background: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .start-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Игровое поле */
+        .game-panel {
+            background: var(--tg-theme-secondary-bg-color, #ffffff);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--tg-theme-hint-color, #ddd);
+        }
+        
+        .multiplier {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--tg-theme-button-color, #3390ec);
+        }
+        
+        .possible-win {
+            font-size: 16px;
+            color: var(--tg-theme-hint-color, #666);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .cell {
+            aspect-ratio: 1;
+            border: none;
+            border-radius: 12px;
+            background: var(--tg-theme-bg-color, #f0f0f0);
+            color: var(--tg-theme-text-color, #000);
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .cell:active {
+            transform: scale(0.95);
+        }
+        
+        .cell.mine {
+            background: #ff4444;
+            color: white;
+        }
+        
+        .cell.gem {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .cell:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .game-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .cashout-btn {
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: #4CAF50;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .restart-btn {
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        /* Сообщения */
+        .message {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            color: white;
+            display: none;
+            animation: slideUp 0.3s;
+            z-index: 1000;
+        }
+        
+        .message.success {
+            background: #4CAF50;
+        }
+        
+        .message.error {
+            background: #ff4444;
+        }
+        
+        .message.info {
+            background: var(--tg-theme-button-color, #3390ec);
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        /* Лоадер */
+        .loader {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        
+        .loader.active {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--tg-theme-secondary-bg-color, #fff);
+            border-top-color: var(--tg-theme-button-color, #3390ec);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loader" id="loader">
+        <div class="spinner"></div>
+    </div>
+    
+    <div class="container">
+        <!-- Шапка с балансом -->
+        <div class="header">
+            <div>
+                <div class="balance-label">💰 ТВОЙ БАЛАНС</div>
+                <div class="balance-amount" id="balance">0 ₽</div>
+            </div>
+            <div>
+                <div class="balance-label">💎 ВЫИГРЫШ</div>
+                <div class="balance-amount" id="currentWin">0 ₽</div>
+            </div>
+        </div>
+        
+        <!-- Панель ставки -->
+        <div class="bet-panel" id="betPanel">
+            <div class="bet-label">💰 СТАВКА</div>
+            <input type="number" class="bet-input" id="betAmount" placeholder="Введите сумму" min="1000" value="10000">
+            
+            <div class="bet-quick">
+                <button class="quick-btn" onclick="setBet(1000)">1к</button>
+                <button class="quick-btn" onclick="setBet(10000)">10к</button>
+                <button class="quick-btn" onclick="setBet(100000)">100к</button>
+                <button class="quick-btn" onclick="setBet(1000000)">1кк</button>
+            </div>
+            
+            <div class="bet-quick">
+                <button class="quick-btn" onclick="setBet(10000000)">10кк</button>
+                <button class="quick-btn" onclick="setBet(100000000)">100кк</button>
+                <button class="quick-btn" onclick="setBetHalf()">1/2</button>
+                <button class="quick-btn" onclick="setBetAll()">ВСЕ</button>
+            </div>
+            
+            <button class="start-btn" id="startBtn" onclick="startGame()">🎮 НАЧАТЬ ИГРУ</button>
+        </div>
+        
+        <!-- Игровое поле -->
+        <div class="game-panel" id="gamePanel">
+            <div class="game-header">
+                <div>
+                    <div class="multiplier" id="multiplier">x1.00</div>
+                    <div class="possible-win" id="possibleWin">0 ₽</div>
+                </div>
+                <div>
+                    <div class="balance-label">МИН ОСТАЛОСЬ</div>
+                    <div class="balance-amount" id="minesLeft">3</div>
+                </div>
+            </div>
+            
+            <div class="grid" id="grid"></div>
+            
+            <div class="game-actions">
+                <button class="cashout-btn" id="cashoutBtn" onclick="cashOut()" disabled>💰 ЗАБРАТЬ</button>
+                <button class="restart-btn" onclick="resetGame()">🔄 ЗАНОВО</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="message" id="message"></div>
+
+    <script>
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => tg.close());
+        
+        // Конфигурация игры
+        const GRID_SIZE = 5;
+        const TOTAL_MINERALS = 3;
+        const MULTIPLIERS = [1.0, 1.2, 1.5, 1.9, 2.4, 3.0, 3.8, 4.8, 6.0, 7.5, 9.4, 11.8, 14.8, 18.5, 23.1, 28.9, 36.1, 45.1, 56.4, 70.5, 88.1, 110.1, 137.6, 172.0, 215.0];
+        
+        // Состояние игры
+        let userBalance = 0;
+        let currentBet = 0;
+        let gameActive = false;
+        let gameOver = false;
+        let mines = [];
+        let opened = [];
+        let currentMultiplier = 1.0;
+        let userId = null;
+        let gameId = null;
+        
+        // Получаем данные пользователя
+        userId = tg.initDataUnsafe?.user?.id;
+        if (!userId) {
+            showMessage('Ошибка авторизации', 'error');
+        } else {
+            loadBalance();
+        }
+        
+        // Загрузка баланса
+        async function loadBalance() {
+            showLoader(true);
+            try {
+                // Отправляем запрос в бота
+                tg.sendData(JSON.stringify({
+                    action: 'get_balance',
+                    user_id: userId
+                }));
+                
+                // Баланс придет через handleWebAppData в боте
+                // Пока показываем заглушку
+                setTimeout(() => {
+                    showLoader(false);
+                }, 1000);
+                
+            } catch (error) {
+                showMessage('Ошибка загрузки баланса', 'error');
+                showLoader(false);
+            }
+        }
+        
+        // Установка ставки
+        function setBet(amount) {
+            document.getElementById('betAmount').value = amount;
+        }
+        
+        function setBetHalf() {
+            const half = Math.floor(userBalance / 2);
+            document.getElementById('betAmount').value = half;
+        }
+        
+        function setBetAll() {
+            document.getElementById('betAmount').value = userBalance;
+        }
+        
+        // Начало игры
+        function startGame() {
+            const betAmount = parseInt(document.getElementById('betAmount').value);
+            
+            if (betAmount < 1000) {
+                showMessage('Минимальная ставка 1000 ₽', 'error');
+                return;
+            }
+            
+            if (betAmount > userBalance) {
+                showMessage('Недостаточно средств', 'error');
+                return;
+            }
+            
+            showLoader(true);
+            
+            // Отправляем запрос на начало игры
+            tg.sendData(JSON.stringify({
+                action: 'start_game',
+                user_id: userId,
+                bet: betAmount
+            }));
+            
+            currentBet = betAmount;
+        }
+        
+        // Открытие клетки
+        function openCell(index) {
+            if (!gameActive || gameOver || opened.includes(index)) return;
+            
+            showLoader(true);
+            
+            tg.sendData(JSON.stringify({
+                action: 'open_cell',
+                user_id: userId,
+                game_id: gameId,
+                cell: index
+            }));
+        }
+        
+        // Забрать выигрыш
+        function cashOut() {
+            if (!gameActive || gameOver) return;
+            
+            showLoader(true);
+            
+            tg.sendData(JSON.stringify({
+                action: 'cash_out',
+                user_id: userId,
+                game_id: gameId
+            }));
+        }
+        
+        // Сброс игры
+        function resetGame() {
+            gameActive = false;
+            gameOver = false;
+            mines = [];
+            opened = [];
+            currentMultiplier = 1.0;
+            gameId = null;
+            
+            document.getElementById('betPanel').style.display = 'block';
+            document.getElementById('gamePanel').style.display = 'none';
+            document.getElementById('cashoutBtn').disabled = true;
+        }
+        
+        // Обновление интерфейса
+        function updateGameUI(data) {
+            gameId = data.game_id;
+            gameActive = data.game_active;
+            gameOver = data.game_over;
+            mines = data.mines || [];
+            opened = data.opened || [];
+            currentMultiplier = data.multiplier || 1.0;
+            
+            // Обновляем баланс
+            if (data.new_balance !== undefined) {
+                userBalance = data.new_balance;
+                document.getElementById('balance').textContent = formatMoney(userBalance);
+            }
+            
+            // Обновляем множитель и возможный выигрыш
+            document.getElementById('multiplier').textContent = `x${currentMultiplier.toFixed(2)}`;
+            const possibleWin = Math.floor(currentBet * currentMultiplier);
+            document.getElementById('possibleWin').textContent = formatMoney(possibleWin);
+            document.getElementById('currentWin').textContent = formatMoney(possibleWin);
+            
+            // Обновляем количество мин
+            const minesLeft = TOTAL_MINERALS - opened.filter(i => mines.includes(i)).length;
+            document.getElementById('minesLeft').textContent = minesLeft;
+            
+            // Рисуем сетку
+            drawGrid();
+            
+            // Показываем игровое поле
+            document.getElementById('betPanel').style.display = 'none';
+            document.getElementById('gamePanel').style.display = 'block';
+            document.getElementById('cashoutBtn').disabled = !gameActive || gameOver;
+            
+            showLoader(false);
+        }
+        
+        // Рисование сетки
+        function drawGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+                const cell = document.createElement('button');
+                cell.className = 'cell';
+                
+                if (gameOver) {
+                    if (mines.includes(i)) {
+                        cell.textContent = '💣';
+                        cell.classList.add('mine');
+                    } else if (opened.includes(i)) {
+                        cell.textContent = '💎';
+                        cell.classList.add('gem');
+                    } else {
+                        cell.textContent = '❓';
+                    }
+                    cell.disabled = true;
+                } else {
+                    if (opened.includes(i)) {
+                        cell.textContent = '💎';
+                        cell.classList.add('gem');
+                        cell.disabled = true;
+                    } else {
+                        cell.textContent = '⬜';
+                        cell.onclick = () => openCell(i);
+                    }
+                }
+                
+                grid.appendChild(cell);
+            }
+        }
+        
+        // Форматирование денег
+        function formatMoney(amount) {
+            return amount.toLocaleString() + ' ₽';
+        }
+        
+        // Показ сообщения
+        function showMessage(text, type = 'info') {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = `message ${type}`;
+            message.style.display = 'block';
+            
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Показ/скрытие лоадера
+        function showLoader(show) {
+            const loader = document.getElementById('loader');
+            if (show) {
+                loader.classList.add('active');
+            } else {
+                loader.classList.remove('active');
+            }
+        }
+        
+        // Обработка данных от бота
+        tg.onEvent('webAppData', (data) => {
+            try {
+                const response = JSON.parse(data.data);
+                
+                if (response.action === 'balance_updated') {
+                    userBalance = response.balance;
+                    document.getElementById('balance').textContent = formatMoney(userBalance);
+                    showMessage('✅ Баланс обновлен', 'success');
+                    showLoader(false);
+                    
+                } else if (response.action === 'game_started') {
+                    updateGameUI(response);
+                    showMessage('🎮 Игра началась!', 'success');
+                    
+                } else if (response.action === 'cell_opened') {
+                    if (response.mine) {
+                        gameOver = true;
+                        gameActive = false;
+                        showMessage('💥 БАБАХ! Вы проиграли', 'error');
+                    } else {
+                        showMessage('💎 +1 самоцвет!', 'success');
+                    }
+                    updateGameUI(response);
+                    
+                } else if (response.action === 'cashed_out') {
+                    gameActive = false;
+                    gameOver = true;
+                    updateGameUI(response);
+                    showMessage(`💰 Выигрыш ${formatMoney(response.win_amount)}`, 'success');
+                    tg.HapticFeedback.notification('success');
+                    
+                } else if (response.action === 'error') {
+                    showMessage(response.message, 'error');
+                    showLoader(false);
+                }
+                
+            } catch (error) {
+                console.error('Error parsing data:', error);
+            }
+        });
+    </script>
+</body>
+</html>
